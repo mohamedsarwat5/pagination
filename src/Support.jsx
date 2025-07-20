@@ -1,22 +1,26 @@
+import { useQuery } from "@tanstack/react-query";
 import React, { useEffect, useState } from "react";
 
 function Support() {
   const [products, setProducts] = useState([]);
-  const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const getProduct = async (number = 1) => {
-    let request = await fetch(
-      `https://ecommerce.routemisr.com/api/v1/products?page=${number}&limit=10`
+  const getProduct = async ({ queryKey }) => {
+    const [_key ,page] = queryKey
+    const request = await fetch(
+      `https://ecommerce.routemisr.com/api/v1/products?page=${page}&limit=10`
     );
-    let res = await request.json();
-    setProducts(res.data);
-    setTotalPages(res.metadata?.numberOfPages);
+    return request.json();
   };
 
-  useEffect(() => {
-    getProduct(currentPage);
-  }, [currentPage]);
+  const { data } = useQuery({
+    queryKey: ["products", currentPage],
+    queryFn: getProduct,
+    keepPreviousData: true,
+  });
+
+  const totalPages = data?.metadata?.numberOfPages || 1;
+
 
   const handleNext = () => {
     if (currentPage < totalPages) {
@@ -55,7 +59,7 @@ function Support() {
   return (
     <>
       <div className="grid md:grid-cols-5 auto-rows-[200px] gap-3 p-4 px-4 md:px-12">
-        {products?.map((el, i) => (
+        {data?.data?.map((el, i) => (
           <h2
             key={i}
             className="bg-indigo-500 text-center px-2 flex items-center justify-center font-bold text-2xl text-white"
